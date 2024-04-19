@@ -1,0 +1,8 @@
+SELECT *
+FROM scooters
+LIMIT 100;
+
+SELECT DISTINCT COUNT(sumdid)
+FROM scooters
+GROUP BY companyname
+LIMIT 100;
