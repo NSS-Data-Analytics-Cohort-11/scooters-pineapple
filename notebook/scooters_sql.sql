@@ -54,7 +54,7 @@ LIMIT 100
 
 SELECT *
 FROM trips
-LIMIT 100
+LIMIT 10
 
 
 SELECT DISTINCT(companyname), COUNT(tripduration) AS count_tripduration
@@ -65,10 +65,66 @@ GROUP BY companyname
 
 
 --Q3.) The goal of Metro Nashville is to have each scooter used a minimum of 3 times per day. Based on the data, what is the average number of trips per scooter per day? Make sure to consider the days that a scooter was available. How does this vary by company?
+WITH dist AS (
+SELECT DISTINCT 
+    sumdid, 
+    companyname, 
+    EXTRACT(MONTH from pubdatetime) ||' '|| EXTRACT(DAY from pubdatetime) AS day
+FROM scooters
+	)
+SELECT sumdid, companyname, month ||' '||day
+group by companyname, sumdid, day
 
-SELECT DISTINCT(sumdid), companyname, startdate, COUNT(startdate) AS count
-FROM trips 
-GROUP BY sumdid, startdate, companyname
-HAVING COUNT(startdate) >=3
-ORDER BY sumdid
 
+
+
+---- Q3.) Dalton code
+WITH
+  scooter_trips AS (
+    SELECT
+      sumdid,
+      companyname,
+      COUNT(DISTINCT DATE(startdate)) AS days_with_trips
+    FROM
+      trips
+    WHERE
+      companyname ILIKE 'BIRD'
+    GROUP BY
+      sumdid,
+      companyname
+  ),
+  scooter_availability AS (
+    SELECT
+      sumdid,
+	  companyname,
+      COUNT(DISTINCT DATE(pubdatetime)) AS total_days_available
+    FROM
+      scooters
+    WHERE
+      companyname ILIKE 'Bird'
+    GROUP BY
+      sumdid, companyname
+  )
+SELECT
+  st.companyname,
+  AVG(
+    CAST(st.days_with_trips AS DECIMAL) / sa.total_days_available
+  ) AS avg_trips_per_scooter_per_day
+FROM
+  scooter_trips st
+  JOIN scooter_availability sa ON st.sumdid = sa.sumdid
+GROUP BY
+  st.companyname;
+
+
+
+--Q4.) Metro would like to know how many scooters are needed, and something that could help with this is knowing peak demand. Estimate the highest count of scooters being used at the same time. When were the highest volume times? Does this vary by zip code or other geographic region?
+select *
+FROM trips
+limit 100
+
+SELECT
+    sumdid,
+    COUNT(*) AS num_trips
+FROM trips
+GROUP BY sumdid;
