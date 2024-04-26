@@ -63,6 +63,25 @@ WHERE tripduration BETWEEN 1 AND 1440
 GROUP BY companyname
 
 
+SELECT *
+FROM trips
+WHERE tripduration BETWEEN 1 AND 1440
+
+
+
+ SELECT
+      sumdid,
+	  companyname,
+      COUNT(DISTINCT DATE(pubdatetime)) AS total_days_available
+    FROM
+      scooters
+    WHERE
+      companyname ILIKE 'Bird'
+    GROUP BY
+      sumdid, companyname
+	LIMIT 100
+
+
 
 --Q3.) The goal of Metro Nashville is to have each scooter used a minimum of 3 times per day. Based on the data, what is the average number of trips per scooter per day? Make sure to consider the days that a scooter was available. How does this vary by company?
 WITH dist AS (
@@ -128,3 +147,36 @@ SELECT
     COUNT(*) AS num_trips
 FROM trips
 GROUP BY sumdid;
+
+
+
+
+
+
+WITH s AS
+	(SELECT
+ 		DISTINCT(pubdatetime::date) as date,
+ 	 	companyname AS company,
+ 		sumdid,
+ 		MIN(chargelevel)
+ 	FROM scooters
+ 	WHERE chargelevel > 0
+ 	GROUP BY date, company, sumdid),
+
+ t AS
+ 	(SELECT
+ 		DISTINCT(pubtimestamp::date) as date,
+ 		companyname AS company,
+ 		triprecordnum as trip_id,
+ 		sumdid
+ 	FROM trips
+ 	WHERE tripduration > 1 AND tripduration < (60*24))
+	
+ SELECT
+ 	s.date,
+ 	s.company,
+ 	s.sumdid,
+ 	trip_id
+ FROM s
+ INNER JOIN t
+ USING (sumdid, date)
